@@ -21,6 +21,7 @@ class ChatActivity : AppCompatActivity() {
     var TAG = "log------"
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: MyAdapter
+    private val adapterItems = mutableListOf<Item>()
 
     private lateinit var binding: ActivityChatBinding
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +33,10 @@ class ChatActivity : AppCompatActivity() {
 
 
         recyclerView = binding.recyclerView
-        adapter = MyAdapter(this)
+        adapter =  MyAdapter(adapterItems) { item ->
+            //item.isSelected =!item.isSelected
+            adapter.notifyItemChanged(adapterItems.indexOf(item))
+        }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -45,6 +49,14 @@ class ChatActivity : AppCompatActivity() {
         items.add(s3)
         adapter.updateData(items)
 
+        binding.sendButton.setOnClickListener {
+            val items = mutableListOf<Item>()
+            var s = Item("001","xxxxx");
+            var s2 = Item("002","222222");
+            items.add(s)
+            items.add(s2)
+            adapter.updateData(items)
+        }
 
     }
 
