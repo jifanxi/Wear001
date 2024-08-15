@@ -21,11 +21,17 @@ import com.j.wear001.R
 import com.j.wear001.databinding.ActivityChatBinding
 import com.j.wear001.presentation.msg.MsgApi
 import com.j.wear001.presentation.user.Item
+import com.j.wear001.presentation.user.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
 
 class ChatActivity : AppCompatActivity() {
 
@@ -61,6 +67,54 @@ class ChatActivity : AppCompatActivity() {
         adapter.updateData(items)
 
         binding.sendButton.setOnClickListener {
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)!= PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.INTERNET), 0)
+            } else {
+                // 已经有权限，可以使用网络套接字
+            }
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                val retrofit = Retrofit.Builder()
+                    .baseUrl("http://10.3.161.91:8085/") // 服务器的基URL
+                    .addConverterFactory(GsonConverterFactory.create()) // 添加Gson转换器
+                    .build()
+
+                val apiService = retrofit.create(MsgApi::class.java)
+
+                // 获取文本框的引用
+                var msg = binding.msg.text
+
+                apiService.addMsg("aaa", msg.toString()).enqueue(object : Callback<List<Item>> {
+                    override fun onResponse(call: Call<List<Item>>, response: Response<List<Item>>) {
+                        if (response.isSuccessful) {
+                            val items = response.body()
+                            if (items!= null) {
+                                // 处理成功的响应
+                                for (item in items) {
+                                    Log.d("API Response", "id: ${item.username}, title: ${item.msg} ")
+                                }
+                            } else {
+                                // 处理空的响应体
+                                Log.d("API Response", "Response body is null")
+                            }
+                        } else {
+                            // 处理失败的响应
+                            Log.d("API Response", "Response code: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<List<Item>>, t: Throwable) {
+                        // 处理网络请求失败的情况
+                        Log.e("API Response", "Error: ${t.message}")
+                    }
+                })
+            }
+        }
+
+
+        binding.queryButton.setOnClickListener {
             val items = mutableListOf<Item>()
             var s = Item("001","xxxxx");
             var s2 = Item("002","222222");
@@ -74,38 +128,35 @@ class ChatActivity : AppCompatActivity() {
                 // 已经有权限，可以使用网络套接字
             }
 
+            CoroutineScope(Dispatchers.IO).launch {
 
+                val retrofit = Retrofit.Builder()
+                    .baseUrl("http://10.3.161.91:8085/") // 服务器的基URL
+                    .addConverterFactory(GsonConverterFactory.create()) // 添加Gson转换器
+                    .build()
+                val serverApi = retrofit.create(MsgApi::class.java)
+                val call = serverApi.getMessageList("aaa","aaa")
 
+                call.enqueue(object : Callback<List<Item>> {
+                    override fun onResponse(call: Call<List<Item>>, response: Response<List<Item>>) {
 
-            val retrofit = Retrofit.Builder()
-                .baseUrl("http://localhost:8085/messages/") // 服务器的基URL
-                .addConverterFactory(GsonConverterFactory.create()) // 添加Gson转换器
-                .build()
-
-            val serverApi = retrofit.create(MsgApi::class.java)
-            val call = serverApi.getServerList("aaa","aaa")
-
-            call.enqueue(object : Callback<List<Item>> {
-                override fun onResponse(call: Call<List<Item>>, response: Response<List<Item>>) {
-
-                    Log.e(TAG, "Error: Text box 1 value: ${response}");
-                    Log.e(TAG, "Error: Text box 1 value: ${response}");
-                    if (response.isSuccessful) {
-                        val servers = response.body() // 获取服务器列表
-                        //adapter.servers = servers?: emptyList()
-                        adapter.notifyDataSetChanged()
-                    } else {
-                        // 处理服务器响应错误的情况
+                        val messages = response.body()
+                        if (messages!= null) {
+                            // 处理成功的响应
+                            adapter.updateData(messages)
+                            Log.e(TAG, "Error: Text box 1 value: ${response}");
+                        } else {
+                            Log.e(TAG, "Error: Text box 1 value: ${response}");
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<List<Item>>, t: Throwable) {
-                    // 处理网络请求失败的情况
-                    Log.e(TAG, "Error: Text box 1 value: ${t}");
-                    Log.e(TAG, "Error: Text box 1 value: ${t}");
+                    override fun onFailure(call: Call<List<Item>>, t: Throwable) {
+                        // 处理网络请求失败的情况
+                        Log.e(TAG, "Error: onFailureonFailure: ${t}");
 
-                }
-            })
+                    }
+                })
+            }
         }
 
     }

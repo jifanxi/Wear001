@@ -16,8 +16,8 @@ class MyAdapter(private val items: MutableList<Item>, private val itemClickListe
 
     inner class ViewHolder(private val binding: RecyclerItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: Item) = with(binding) {
-            textViewName.text = item.title
-            textViewDescription.text = item.description
+            textViewName.text = item.username
+            textViewDescription.text = item.msg
             //checkBoxSelected.isChecked = item.isSelected
             root.setOnClickListener { itemClickListener(item) }
         }
